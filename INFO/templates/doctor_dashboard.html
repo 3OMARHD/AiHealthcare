@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard - Secure Health{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    {% if signed_record_id %}
+    <div class="alert alert-success d-flex justify-content-between align-items-center" role="alert">
+        <div>
+            <i class="fas fa-check-circle me-2"></i>
+            Record signed successfully.
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('view_medical_record_signature', record_id=signed_record_id) }}" class="btn btn-sm btn-success">
+                <i class="fas fa-signature me-1"></i> View Signature
+            </a>
+            <a href="{{ url_for('download_medical_record_signature', record_id=signed_record_id) }}" class="btn btn-sm btn-outline-success">
+                <i class="fas fa-download me-1"></i> Download
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Doctor Dashboard</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('doctor_patients') }}" class="btn btn-primary">
+                <i class="fas fa-users"></i> My Patients ({{ stats.total_patients }})
+            </a>
+            <a href="{{ url_for('doctor_appointments') }}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar"></i> View All Appointments
+            </a>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Patients</h5>
+                    <h2 class="card-text">{{ stats.total_patients }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Scheduled Appointments</h5>
+                    <h2 class="card-text">{{ stats.scheduled_appointments }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Completed Appointments</h5>
+                    <h2 class="card-text">{{ stats.completed_appointments }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Today's Appointments -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Today's Appointments</h5>
+                </div>
+                <div class="card-body">
+                    {% if today_appointments %}
+                        <div class="list-group">
+                            {% for appt in today_appointments %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ appt.patient_name }}</h6>
+                                        <span class="badge bg-{{ appt.status_color }}">{{ appt.status|title }}</span>
+                                    </div>
+                                    <p class="mb-1">Time: {{ appt.date.strftime('%I:%M %p') }}</p>
+                                    <p class="mb-1">Reason: {{ appt.reason }}</p>
+                                    <small>Blood Type: {{ appt.blood_type }}</small>
+                                    <div class="mt-2">
+                                        <form action="{{ url_for('update_appointment', appointment_id=appt.id) }}" method="POST" class="d-inline">
+                                            <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                                <option value="scheduled" {% if appt.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                                <option value="completed" {% if appt.status == 'completed' %}selected{% endif %}>Completed</option>
+                                                <option value="cancelled" {% if appt.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                                <option value="no_show" {% if appt.status == 'no_show' %}selected{% endif %}>No Show</option>
+                                            </select>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No appointments scheduled for today.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Appointments -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Upcoming Appointments</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_appointments %}
+                        <div class="list-group">
+                            {% for appt in upcoming_appointments %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ appt.patient_name }}</h6>
+                                        <span class="badge bg-{{ appt.status_color }}">{{ appt.status|title }}</span>
+                                    </div>
+                                    <p class="mb-1">Date: {{ appt.date.strftime('%B %d, %Y') }}</p>
+                                    <p class="mb-1">Time: {{ appt.date.strftime('%I:%M %p') }}</p>
+                                    <p class="mb-1">Reason: {{ appt.reason }}</p>
+                                    <small>Blood Type: {{ appt.blood_type }}</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No upcoming appointments.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Medical Records -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Recent Medical Records</h5>
+        </div>
+        <div class="card-body">
+            {% if recent_records %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Diagnosis</th>
+                                <th>Treatment</th>
+                                <th>Blood Type</th>
+                                <th>Blockchain</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_records %}
+                                <tr>
+                                    <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ record.patient_name }}</td>
+                                    <td>{{ record.diagnosis }}</td>
+                                    <td>{{ record.treatment }}</td>
+                                    <td>{{ record.blood_type }}</td>
+                                    <td>
+                                        {% if record.on_chain %}
+                                        <span class="badge bg-success">⛓ #{{ record.blockchain_record_id }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Off-chain</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.signed %}
+                                            <a href="{{ url_for('view_medical_record_signature', record_id=record.id) }}" class="btn btn-sm btn-success" title="Signed and verified">
+                                                <i class="fas fa-signature"></i>
+                                                <i class="fas fa-check ms-1"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No recent medical records.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Add Medical Record Form -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-file-medical me-2"></i>Add Medical Record & Anchor to Blockchain</h5>
+        </div>
+        <div class="card-body">
+            <form id="addRecordForm" action="{{ url_for('add_medical_record') }}" method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="patient_id" class="form-label">Patient</label>
+                        <select class="form-select" id="patient_id" name="patient_id" required>
+                            <option value="">Select Patient</option>
+                            {% for patient in patients %}
+                                <option value="{{ patient[0] }}" data-wallet="{{ patient[2] if patient|length > 2 else '' }}">{{ patient[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="diagnosis" class="form-label">Diagnosis</label>
+                        <input type="text" class="form-control" id="diagnosis" name="diagnosis" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="treatment" class="form-label">Treatment</label>
+                    <textarea class="form-control" id="treatment" name="treatment" rows="3" required></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary" name="action" value="add">
+                        <i class="fas fa-save me-1"></i>Save Record (DB Only)
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnAnchorChain" onclick="submitWithMetaMask()">
+                        <i class="fab fa-ethereum me-1"></i><i class="fas fa-signature ms-1 me-1"></i>Sign & Anchor on Chain (MetaMask)
+                    </button>
+                </div>
+            </form>
+
+            <!-- MetaMask Transaction Status -->
+            <div id="metamask-status" style="display:none;" class="mt-3">
+                <div class="card" style="border-left:4px solid #f59e0b;">
+                    <div class="card-body py-3">
+                        <div id="metamask-msg" class="d-flex align-items-center gap-2">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Waiting for MetaMask...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ethers.js -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<script>
+var CONTRACT_ADDRESS = "{{ CONTRACT_ADDRESS }}";
+var CONTRACT_ABI     = {{ CONTRACT_ABI | tojson }};
+var SESSION_WALLET   = "{{ session.get('wallet_address', '') }}";
+
+// ─── Connect and show blockchain status ───────────────────────
+async function connectBlockchain() {
+    const el = document.getElementById('blockchain-status');
+    if (!window.ethereum) {
+        el.innerText = 'MetaMask not detected.';
+        el.style.color = '#ff6b6b';
+        return;
+    }
+    try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
+        const connected = accounts[0].toLowerCase();
+
+        if (SESSION_WALLET && connected !== SESSION_WALLET.toLowerCase()) {
+            el.innerText = `Wrong wallet. Expected: ${SESSION_WALLET.slice(0,8)}...`;
+            el.style.color = '#ff6b6b';
+            return;
+        }
+
+        const signer   = await provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        const role     = await contract.getRole(connected);
+        el.innerText = `⛓ Connected as ${role} (${connected.slice(0,6)}...${connected.slice(-4)})`;
+        el.style.color = '#00d4aa';
+    } catch(e) {
+        el.innerText = 'Blockchain: Error connecting';
+        el.style.color = '#ff6b6b';
+    }
+}
+
+// ─── Submit record via MetaMask ───────────────────────────────
+async function submitWithMetaMask() {
+    const patientSelect = document.getElementById('patient_id');
+    const diagnosis = document.getElementById('diagnosis').value.trim();
+    const treatment = document.getElementById('treatment').value.trim();
+    const patientId = patientSelect.value;
+    const patientWallet = patientSelect.options[patientSelect.selectedIndex]?.dataset?.wallet;
+
+    if (!patientId || !diagnosis || !treatment) {
+        alert('Please fill in all fields (Patient, Diagnosis, Treatment).');
+        return;
+    }
+
+    if (!window.ethereum) {
+        alert('MetaMask is not installed. Please install MetaMask to anchor records on the blockchain.');
+        return;
+    }
+
+    const statusEl = document.getElementById('metamask-status');
+    const msgEl = document.getElementById('metamask-msg');
+    statusEl.style.display = 'block';
+
+    try {
+        // Step 1: Save + RSA sign record in DB
+        msgEl.innerHTML = '<i class="fas fa-database text-primary"></i> <span>Saving & RSA-signing record in database...</span>';
+
+        const formData = new FormData();
+        formData.append('patient_id', patientId);
+        formData.append('diagnosis', diagnosis);
+        formData.append('treatment', treatment);
+        formData.append('action', 'add');
+        formData.append('metamask_anchor', 'true');
+
+        const saveRes = await fetch('/doctor/add-medical-record-api', {
+            method: 'POST',
+            body: formData
+        });
+        const saveData = await saveRes.json();
+
+        if (!saveData.success) {
+            throw new Error(saveData.error || 'Failed to save record to database.');
+        }
+
+        const recordId = saveData.record_id;
+        const recordHash = saveData.record_hash;
+        const patientAddr = saveData.patient_wallet;
+
+        // Step 2: Connect MetaMask
+        msgEl.innerHTML = '<i class="fab fa-ethereum text-warning"></i> <span>Connecting to MetaMask — please approve...</span>';
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        const doctorAddr = await signer.getAddress();
+
+        // Step 3: Submit transaction — MetaMask popup appears here
+        msgEl.innerHTML = '<i class="fab fa-ethereum text-warning fa-spin"></i> <span><strong>MetaMask opened!</strong> Please confirm the transaction in your wallet...</span>';
+
+        const hashBytes = ethers.getBytes('0x' + recordHash);
+        const tx = await contract.addRecord(
+            patientAddr,
+            hashBytes,
+            diagnosis.substring(0, 50),
+            "Consultation"
+        );
+
+        msgEl.innerHTML = '<i class="fas fa-spinner fa-spin text-info"></i> <span>Transaction submitted! Waiting for confirmation...</span>';
+
+        const receipt = await tx.wait();
+        const txHash = receipt.hash;
+
+        // Extract blockchain record ID from event logs
+        let blockchainRecordId = null;
+        for (const log of receipt.logs) {
+            try {
+                const parsed = contract.interface.parseLog(log);
+                if (parsed && parsed.name === 'RecordAdded') {
+                    blockchainRecordId = parsed.args.recordId.toString();
+                }
+            } catch(e) { /* skip non-matching logs */ }
+        }
+
+        // Step 4: Update DB with blockchain info
+        msgEl.innerHTML = '<i class="fas fa-database text-success"></i> <span>Updating database with blockchain info...</span>';
+
+        await fetch('/doctor/update-record-blockchain', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                record_id: recordId,
+                blockchain_record_id: blockchainRecordId,
+                blockchain_tx: txHash
+            })
+        });
+
+        // Step 5: Done!
+        const signedLabel = saveData.signed ? '✅ RSA Signed' : '⚠️ Unsigned';
+        msgEl.innerHTML = `
+            <div>
+                <div class="text-success mb-2"><i class="fas fa-check-circle me-1"></i><strong>Record signed & anchored on blockchain!</strong></div>
+                <div class="small">
+                    <div>DB Record: #${recordId} | ${signedLabel}</div>
+                    <div>Chain Record: #${blockchainRecordId || 'N/A'}</div>
+                    <div>TX: <code style="font-size:0.75rem;">${txHash}</code></div>
+                    <div>Doctor: <code style="font-size:0.75rem;">${doctorAddr.slice(0,10)}...</code> → Patient: <code style="font-size:0.75rem;">${patientAddr.slice(0,10)}...</code></div>
+                </div>
+                <a href="${window.location.href}" class="btn btn-sm btn-primary mt-2"><i class="fas fa-sync me-1"></i>Refresh Dashboard</a>
+            </div>`;
+
+    } catch (err) {
+        if (err.code === 'ACTION_REJECTED' || err.code === 4001) {
+            msgEl.innerHTML = '<i class="fas fa-times-circle text-warning"></i> <span>Transaction cancelled. Record was saved & signed in database but NOT anchored on blockchain.</span>';
+        } else {
+            msgEl.innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> <span>Error: ${err.message}</span>`;
+        }
+    }
+}
+
+window.addEventListener('load', connectBlockchain);
+</script>
+
+<div id="blockchain-status" style="
+    position: fixed; bottom: 16px; right: 16px;
+    background: #1a1a2e; color: #00d4aa;
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-family: monospace;
+    z-index: 9999;">
+    Connecting to blockchain...
+</div>
+{% endblock %}

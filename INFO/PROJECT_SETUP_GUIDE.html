@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Health - Project Setup & Testing Guide</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--accent:#3b82f6;--green:#22c55e;--orange:#f59e0b;--text:#e2e8f0;--muted:#94a3b8}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;line-height:1.7}
+.hero{background:linear-gradient(135deg,#1e3a5f,#0f172a);padding:60px 0;text-align:center;border-bottom:2px solid var(--accent)}
+.hero h1{font-size:2.5rem;font-weight:700;background:linear-gradient(90deg,#3b82f6,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:1.1rem}
+.step-card{background:var(--card);border:1px solid #334155;border-radius:12px;padding:24px;margin-bottom:20px;transition:border-color .3s}
+.step-card:hover{border-color:var(--accent)}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--accent);color:#fff;border-radius:50%;font-weight:700;font-size:0.9rem;margin-right:12px;flex-shrink:0}
+.step-title{font-size:1.2rem;font-weight:600;display:flex;align-items:center}
+code,pre{background:#0d1117;border:1px solid #334155;border-radius:6px;color:#7dd3fc;font-size:0.85rem}
+code{padding:2px 6px}
+pre{padding:16px;overflow-x:auto;margin:12px 0}
+.badge-role{padding:4px 10px;border-radius:20px;font-size:0.8rem;font-weight:600}
+.badge-patient{background:#3b82f6;color:#fff}
+.badge-doctor{background:#22c55e;color:#fff}
+.badge-admin{background:#f59e0b;color:#000}
+.section-header{color:var(--accent);font-size:1.5rem;font-weight:700;border-bottom:2px solid #334155;padding-bottom:8px;margin:40px 0 20px}
+.check{color:var(--green)}
+.warn{color:var(--orange)}
+table{width:100%;margin:12px 0}
+table th{background:#334155;padding:8px 12px;font-size:0.85rem}
+table td{padding:8px 12px;border-bottom:1px solid #334155;font-size:0.85rem}
+.toc a{color:var(--accent);text-decoration:none;display:block;padding:4px 0}
+.toc a:hover{color:#60a5fa}
+.note{background:#1a2744;border-left:4px solid var(--accent);padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:0.9rem}
+.warn-box{background:#2a1f0f;border-left:4px solid var(--orange);padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:0.9rem}
+</style>
+</head>
+<body>
+
+<div class="hero">
+<div class="container">
+<h1><i class="fas fa-hospital me-2"></i>Secure Health</h1>
+<p>Blockchain-Anchored Medical Records System — Setup & Testing Guide</p>
+<div class="mt-3">
+<span class="badge-role badge-patient me-1">Patient</span>
+<span class="badge-role badge-doctor me-1">Doctor</span>
+<span class="badge-role badge-admin">Admin</span>
+</div>
+</div>
+</div>
+
+<div class="container py-5" style="max-width:900px">
+
+<!-- TOC -->
+<div class="step-card">
+<h5><i class="fas fa-list me-2 text-info"></i>Table of Contents</h5>
+<div class="toc">
+<a href="#prereqs">0. Prerequisites</a>
+<a href="#step1">1. Database Setup (MySQL)</a>
+<a href="#step2">2. Python Environment & Dependencies</a>
+<a href="#step3">3. Blockchain Setup (Hardhat + MetaMask)</a>
+<a href="#step4">4. Start the Application</a>
+<a href="#step5">5. Test: Patient Registration & Login</a>
+<a href="#step6">6. Test: Doctor Registration & Login</a>
+<a href="#step7">7. Test: Patient Books Appointment</a>
+<a href="#step8">8. Test: Doctor Creates Record + MetaMask Anchor</a>
+<a href="#step9">9. Test: Patient Views Record & Blockchain TX</a>
+<a href="#step10">10. Test: Admin Login & Blockchain Dashboard</a>
+<a href="#arch">11. System Architecture</a>
+</div>
+</div>
+
+<!-- PREREQS -->
+<h2 class="section-header" id="prereqs"><i class="fas fa-tools me-2"></i>0. Prerequisites</h2>
+<div class="step-card">
+<table>
+<tr><th>Software</th><th>Version</th><th>Download</th></tr>
+<tr><td>XAMPP (MySQL + Apache)</td><td>8.x</td><td><a href="https://www.apachefriends.org/" style="color:var(--accent)">apachefriends.org</a></td></tr>
+<tr><td>Python</td><td>3.10+</td><td><a href="https://python.org" style="color:var(--accent)">python.org</a></td></tr>
+<tr><td>Node.js</td><td>18+</td><td><a href="https://nodejs.org" style="color:var(--accent)">nodejs.org</a></td></tr>
+<tr><td>MetaMask (Browser Extension)</td><td>Latest</td><td><a href="https://metamask.io" style="color:var(--accent)">metamask.io</a></td></tr>
+</table>
+</div>
+
+<!-- STEP 1 -->
+<h2 class="section-header" id="step1"><i class="fas fa-database me-2"></i>1. Database Setup</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">1a</span>Start XAMPP → Start MySQL</div>
+<p>Open XAMPP Control Panel and click <strong>Start</strong> next to MySQL.</p>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">1b</span>Create Database</div>
+<p>Open <a href="http://localhost/phpmyadmin" style="color:var(--accent)">phpMyAdmin</a> → Click <strong>New</strong> → Name: <code>securedocs_db</code> → Create.</p>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">1c</span>Import Schema</div>
+<p>In phpMyAdmin, select <code>securedocs_db</code> → <strong>Import</strong> tab → Choose file:</p>
+<pre>INFO\securedocs_db_complete.sql</pre>
+<p>Click <strong>Go</strong>. This creates all 13 tables with blockchain columns.</p>
+<div class="note"><i class="fas fa-info-circle me-2"></i>Alternatively via CLI:
+<pre>Get-Content "INFO\securedocs_db_complete.sql" | &amp; "C:\xampp\mysql\bin\mysql.exe" -u root securedocs_db</pre></div>
+</div>
+
+<!-- STEP 2 -->
+<h2 class="section-header" id="step2"><i class="fab fa-python me-2"></i>2. Python Environment</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">2a</span>Create Virtual Environment</div>
+<pre>cd DE_PROJECTDUpdate\INFO
+python -m venv .venv
+.\.venv\Scripts\Activate</pre>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">2b</span>Install Dependencies</div>
+<pre>pip install -r requirements.txt</pre>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">2c</span>Verify .env</div>
+<p>Ensure <code>INFO\.env</code> has correct MySQL credentials:</p>
+<pre>MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=
+MYSQL_DB=securedocs_db</pre>
+</div>
+
+<!-- STEP 3 -->
+<h2 class="section-header" id="step3"><i class="fab fa-ethereum me-2"></i>3. Blockchain Setup</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">3a</span>Install Hardhat Dependencies</div>
+<pre>cd DE_PROJECTDUpdate\blockchain
+npm install</pre>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">3b</span>Start Hardhat Node (Terminal 1 — keep open)</div>
+<pre>npx hardhat node</pre>
+<p>This starts a local Ethereum blockchain at <code>http://127.0.0.1:8545</code> with 20 test accounts.</p>
+<div class="warn-box"><i class="fas fa-exclamation-triangle me-2"></i>Keep this terminal open! If you close it, the blockchain resets.</div>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">3c</span>Deploy Smart Contract (Terminal 2)</div>
+<pre>npx hardhat run scripts/deploy.js --network localhost</pre>
+<p>Note the contract address printed (e.g. <code>0x5FbDB2315678afecb367f032d93F642f64180aa3</code>).</p>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">3d</span>Configure MetaMask</div>
+<ol>
+<li>Open MetaMask → Settings → Networks → <strong>Add Network Manually</strong></li>
+<li>Fill in:
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>Network Name</td><td>Hardhat Local</td></tr>
+<tr><td>RPC URL</td><td><code>http://127.0.0.1:8545</code></td></tr>
+<tr><td>Chain ID</td><td><code>31337</code></td></tr>
+<tr><td>Currency</td><td><code>ETH</code></td></tr>
+</table></li>
+<li>Import 3 test accounts using their private keys from the Hardhat terminal:</li>
+</ol>
+<table>
+<tr><th>Role</th><th>Account</th><th>Private Key</th></tr>
+<tr><td><span class="badge-role badge-admin">Admin</span></td><td>#0</td><td><code>0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80</code></td></tr>
+<tr><td><span class="badge-role badge-doctor">Doctor</span></td><td>#1</td><td><code>0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d</code></td></tr>
+<tr><td><span class="badge-role badge-patient">Patient</span></td><td>#2</td><td><code>0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a</code></td></tr>
+</table>
+</div>
+
+<!-- STEP 4 -->
+<h2 class="section-header" id="step4"><i class="fas fa-play me-2"></i>4. Start the Application</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">4</span>Run Flask (Terminal 3)</div>
+<pre>cd DE_PROJECTDUpdate\INFO
+python app.py</pre>
+<p>Wait for TensorFlow to load (~15 seconds). App will be at <a href="http://127.0.0.1:5000" style="color:var(--accent)">http://127.0.0.1:5000</a></p>
+<div class="note"><i class="fas fa-terminal me-2"></i>You should have <strong>3 terminals open</strong>: Hardhat node, deploy (done), Flask app.</div>
+</div>
+
+<!-- STEP 5 -->
+<h2 class="section-header" id="step5"><i class="fas fa-user me-2"></i>5. Test: Patient Registration</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">5a</span>Register Patient</div>
+<ol>
+<li>Go to <code>http://127.0.0.1:5000/register</code></li>
+<li>Fill in: Username, Email, Password, First/Last Name</li>
+<li>Role: <strong>Patient</strong></li>
+<li>Wallet Address: <code>0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC</code> (Account #2)</li>
+<li>Click Register</li>
+</ol>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">5b</span>Setup 2FA</div>
+<ol>
+<li>After registration, you'll be asked to set up 2FA (TOTP)</li>
+<li>Scan the QR code with Google Authenticator / Authy</li>
+<li>Enter the 6-digit code to verify</li>
+</ol>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">5c</span>Login as Patient</div>
+<ol>
+<li>Go to <code>/login</code> → Enter credentials → Enter 2FA code</li>
+<li><span class="check">✓ Expected:</span> Redirected to Patient Dashboard</li>
+<li>You should see: Dashboard stats, appointment booking, notifications</li>
+</ol>
+</div>
+
+<!-- STEP 6 -->
+<h2 class="section-header" id="step6"><i class="fas fa-user-md me-2"></i>6. Test: Doctor Registration</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">6a</span>Register Doctor</div>
+<ol>
+<li>Logout → Go to <code>/register</code></li>
+<li>Role: <strong>Doctor</strong>, fill specialization</li>
+<li>Wallet Address: <code>0x70997970C51812dc3A010C7d01b50e0d17dc79C8</code> (Account #1)</li>
+<li>Complete registration + 2FA setup</li>
+</ol>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">6b</span>Login as Doctor</div>
+<ol>
+<li>Login → 2FA → Doctor Dashboard</li>
+<li><span class="check">✓ Expected:</span> See appointments list, patient list, "Add Medical Record" form</li>
+</ol>
+</div>
+
+<!-- STEP 7 -->
+<h2 class="section-header" id="step7"><i class="fas fa-calendar-check me-2"></i>7. Test: Patient Books Appointment</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">7</span>Book Appointment</div>
+<ol>
+<li>Login as <strong>Patient</strong></li>
+<li>Go to Appointments → Select the Doctor you registered</li>
+<li>Choose date/time → Submit</li>
+<li><span class="check">✓ Expected:</span> Appointment appears in patient's list</li>
+<li>Login as <strong>Doctor</strong> → <span class="check">✓</span> Appointment should appear on doctor dashboard</li>
+</ol>
+</div>
+
+<!-- STEP 8 -->
+<h2 class="section-header" id="step8"><i class="fab fa-ethereum me-2"></i>8. Test: Doctor Creates Record + MetaMask</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">8a</span>Switch MetaMask to Doctor Wallet</div>
+<p>In MetaMask, switch to <strong>Account #1</strong> (Doctor: <code>0x7099...79C8</code>)</p>
+<div class="warn-box"><i class="fas fa-exclamation-triangle me-2"></i><strong>Critical!</strong> MetaMask must be on the doctor's wallet, NOT the patient's. This is the most common error.</div>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">8b</span>Add Medical Record</div>
+<ol>
+<li>On Doctor Dashboard → "Add Medical Record" form</li>
+<li>Select the Patient from dropdown</li>
+<li>Enter Diagnosis and Treatment</li>
+<li>Click <strong>"Sign & Anchor on Chain (MetaMask)"</strong></li>
+</ol>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">8c</span>MetaMask Confirmation Flow</div>
+<ol>
+<li><span class="check">✓</span> Status: "Saving & RSA-signing record in database..."</li>
+<li><span class="check">✓</span> Status: "Connecting to MetaMask..."</li>
+<li><span class="check">✓</span> MetaMask popup appears → Click <strong>Confirm</strong></li>
+<li><span class="check">✓</span> Status: "Transaction submitted! Waiting..."</li>
+<li><span class="check">✓</span> Status: "Record signed & anchored on blockchain!" with TX hash</li>
+</ol>
+</div>
+
+<!-- STEP 9 -->
+<h2 class="section-header" id="step9"><i class="fas fa-eye me-2"></i>9. Test: Patient Views Record</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">9a</span>View in UI</div>
+<ol>
+<li>Switch MetaMask to <strong>Account #2</strong> (Patient)</li>
+<li>Login as Patient → Go to Medical Records</li>
+<li><span class="check">✓ Expected:</span> Record shows with <code>⛓ On-Chain #1</code> badge</li>
+<li>Click the badge → Modal shows TX hash details</li>
+</ol>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">9b</span>Load from MetaMask</div>
+<ol>
+<li>Scroll to "My Blockchain Transactions" section</li>
+<li>Click <strong>"Load from MetaMask"</strong></li>
+<li><span class="check">✓ Expected:</span> Table shows record with Doctor wallet, diagnosis label, type, date, "✓ Verified"</li>
+</ol>
+</div>
+
+<!-- STEP 10 -->
+<h2 class="section-header" id="step10"><i class="fas fa-shield-alt me-2"></i>10. Test: Admin Dashboard</h2>
+<div class="step-card">
+<div class="step-title"><span class="step-num">10a</span>Admin Login</div>
+<ol>
+<li>Go to <code>/login</code> → Click <strong>"Admin Login"</strong> button</li>
+<li>Enter admin credentials → 2FA</li>
+<li><span class="check">✓ Expected:</span> Admin Dashboard loads</li>
+</ol>
+<div class="note"><i class="fas fa-info-circle me-2"></i>Default admin: <code>admin</code> / <code>admin123</code> (if you created one via create_admin.py earlier)</div>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">10b</span>Verify Dashboard</div>
+<table>
+<tr><th>Section</th><th>Expected</th></tr>
+<tr><td>Stats Cards</td><td>Shows patient/doctor/admin counts + on-chain records count</td></tr>
+<tr><td>Transaction Ledger</td><td>Shows <code>Doctor (From) → Patient (To)</code> — NO diagnosis visible</td></tr>
+<tr><td>Blockchain Status Bar</td><td>Shows "Connected", contract address, Chain ID: 31337, Block #</td></tr>
+<tr><td>Assign Wallet</td><td>User dropdown with wallet status (✅ or ⚠)</td></tr>
+<tr><td>Verify Record</td><td>Enter record ID → checks hash match + on-chain status</td></tr>
+</table>
+</div>
+<div class="step-card">
+<div class="step-title"><span class="step-num">10c</span>Admin Privacy Check</div>
+<p><span class="check">✓ PASS</span> if: Admin can see "Doctor X → Patient Y" but <strong>cannot</strong> see diagnosis or treatment.</p>
+<p><span style="color:#ef4444">✗ FAIL</span> if: Diagnosis or treatment text is visible anywhere on admin dashboard.</p>
+</div>
+
+<!-- ARCHITECTURE -->
+<h2 class="section-header" id="arch"><i class="fas fa-project-diagram me-2"></i>11. System Architecture</h2>
+<div class="step-card">
+<pre style="color:var(--green);font-size:0.8rem">
+┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
+│   Browser   │────▶│  Flask App   │────▶│  MySQL (XAMPP)   │
+│  (MetaMask) │     │  :5000       │     │  securedocs_db   │
+└──────┬──────┘     └──────┬───────┘     └─────────────────┘
+       │                   │
+       │  ethers.js        │  web3 (blockchain_utils.py)
+       ▼                   ▼
+┌──────────────────────────────────┐
+│     Hardhat Local Blockchain     │
+│     :8545  (Chain ID: 31337)     │
+│                                  │
+│  ┌────────────────────────────┐  │
+│  │  MedicalRecords Contract   │  │
+│  │  - registerDoctor()       │  │
+│  │  - registerPatient()      │  │
+│  │  - addRecord() ← MetaMask │  │
+│  │  - getRecord()            │  │
+│  │  - getPatientRecordIds()  │  │
+│  │  - getAllRecordIds()       │  │
+│  └────────────────────────────┘  │
+└──────────────────────────────────┘
+
+Data Flow (Doctor adds record):
+  1. Doctor fills form → clicks "Sign & Anchor"
+  2. Flask API: saves to MySQL + RSA signs
+  3. Browser: MetaMask popup → doctor signs TX
+  4. Blockchain: addRecord(patient, hash, label, type)
+  5. Browser: updates MySQL with TX hash
+  6. Patient: sees ⛓ On-Chain badge + can verify via MetaMask
+</pre>
+</div>
+
+<div class="step-card" style="text-align:center;border-color:var(--green)">
+<h4 style="color:var(--green)"><i class="fas fa-check-circle me-2"></i>All Tests Passed!</h4>
+<p class="mb-0" style="color:var(--muted)">If all steps above show ✓, your system is fully operational with blockchain integration.</p>
+</div>
+
+</div>
+
+<footer style="background:#1e293b;padding:20px;text-align:center;color:var(--muted);font-size:0.85rem">
+<p class="mb-0">Secure Health — Blockchain Medical Records System — Setup Guide v1.0</p>
+</footer>
+
+</body>
+</html>

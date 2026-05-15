@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Login - SecureDocs{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4">
+                    <i class="fas fa-sign-in-alt text-primary me-2"></i>Login
+                </h2>
+                
+                <form method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Admin Login Separator -->
+                <div class="text-center my-4" style="position: relative;">
+                    <hr style="border-color: var(--border-color); opacity: 0.3;">
+                    <span style="
+                        position: absolute; top: 50%; left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: var(--card-bg, #fff);
+                        padding: 0 1rem;
+                        font-size: 0.78rem;
+                        color: var(--muted, #6c757d);
+                        text-transform: uppercase;
+                        letter-spacing: 0.08em;
+                        font-weight: 600;
+                    ">Administrator Access</span>
+                </div>
+
+                <!-- Admin Login Button -->
+                <div class="d-grid">
+                    <button type="button" class="btn btn-admin-login" id="admin-login-toggle" onclick="toggleAdminForm()">
+                        <i class="fas fa-user-shield me-2"></i>Admin Login
+                    </button>
+                </div>
+
+                <!-- Admin Login Form (hidden by default) -->
+                <div id="admin-login-form" style="display: none; margin-top: 1.5rem;">
+                    <div style="
+                        background: linear-gradient(135deg, rgba(231,76,60,0.08), rgba(192,57,43,0.05));
+                        border: 1px solid rgba(231,76,60,0.2);
+                        border-radius: 12px;
+                        padding: 1.5rem;
+                    ">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-shield-alt" style="font-size: 2rem; color: #e74c3c; opacity: 0.8;"></i>
+                            <p style="font-size: 0.8rem; color: var(--muted, #6c757d); margin-top: 0.5rem;">
+                                Restricted area — authorized administrators only
+                            </p>
+                        </div>
+                        <form method="POST" action="{{ url_for('admin_login') }}" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="admin_username" class="form-label" style="font-size: 0.85rem;">
+                                    <i class="fas fa-user-cog me-1"></i>Admin Username
+                                </label>
+                                <input type="text" class="form-control" id="admin_username" name="username" required
+                                       placeholder="Enter admin username">
+                            </div>
+                            <div class="mb-3">
+                                <label for="admin_password" class="form-label" style="font-size: 0.85rem;">
+                                    <i class="fas fa-key me-1"></i>Admin Password
+                                </label>
+                                <input type="password" class="form-control" id="admin_password" name="password" required
+                                       placeholder="Enter admin password">
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-danger btn-lg" style="
+                                    background: linear-gradient(135deg, #c0392b, #e74c3c);
+                                    border: none;
+                                    font-weight: 700;
+                                    letter-spacing: 0.5px;
+                                    box-shadow: 0 4px 15px rgba(231,76,60,0.3);
+                                ">
+                                    <i class="fas fa-lock me-2"></i>Authenticate as Admin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="mb-0">Don't have an account? 
+                        <a href="/register" class="text-primary">Register here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-admin-login {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: rgba(255,255,255,0.9);
+        border: 1px solid rgba(231,76,60,0.3);
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-admin-login:hover {
+        background: linear-gradient(135deg, #c0392b, #e74c3c);
+        color: #fff;
+        border-color: #e74c3c;
+        box-shadow: 0 4px 20px rgba(231,76,60,0.35);
+        transform: translateY(-2px);
+    }
+    .btn-admin-login:active {
+        transform: translateY(0);
+    }
+    .btn-admin-login.active {
+        background: linear-gradient(135deg, #c0392b, #e74c3c);
+        color: #fff;
+        border-color: #e74c3c;
+    }
+    #admin-login-form {
+        animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleAdminForm() {
+        const form = document.getElementById('admin-login-form');
+        const btn = document.getElementById('admin-login-toggle');
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            btn.classList.add('active');
+            btn.innerHTML = '<i class="fas fa-times me-2"></i>Close Admin Login';
+        } else {
+            form.style.display = 'none';
+            btn.classList.remove('active');
+            btn.innerHTML = '<i class="fas fa-user-shield me-2"></i>Admin Login';
+        }
+    }
+
+    // Form validation
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+{% endblock %}

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedChain — Blockchain Medical Records</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0a0d14;
+      --surface:   #111827;
+      --card:      #1a2235;
+      --border:    #1e293b;
+      --accent:    #3b82f6;
+      --accent2:   #6366f1;
+      --green:     #10b981;
+      --yellow:    #f59e0b;
+      --red:       #ef4444;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --radius:    12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Navbar ──────────────────────────────────── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: .6rem;
+      font-weight: 700; font-size: 1.1rem; letter-spacing: -.3px;
+    }
+
+    .nav-logo span { color: var(--accent); }
+
+    .wallet-section {
+      display: flex; align-items: center; gap: .75rem;
+    }
+
+    .role-badge {
+      padding: .25rem .75rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .role-badge.admin  { background: rgba(99,102,241,.2); color: #a5b4fc; border: 1px solid #6366f1; }
+    .role-badge.doctor { background: rgba(16,185,129,.2); color: #6ee7b7; border: 1px solid #10b981; }
+    .role-badge.patient{ background: rgba(59,130,246,.2); color: #93c5fd; border: 1px solid #3b82f6; }
+    .role-badge.none   { background: rgba(239,68,68,.2);  color: #fca5a5; border: 1px solid #ef4444; }
+
+    /* ── Buttons ──────────────────────────────────── */
+    button {
+      cursor: pointer; border: none; outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: all .18s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; padding: .6rem 1.4rem;
+      border-radius: 8px; font-weight: 600; font-size: .875rem;
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .btn-outline {
+      background: transparent; color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: .5rem 1.2rem; border-radius: 8px;
+      font-weight: 500; font-size: .875rem;
+    }
+    .btn-outline:hover { background: rgba(59,130,246,.1); }
+
+    /* ── Layout ───────────────────────────────────── */
+    main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    section { display: none; }
+    section.active { display: block; }
+
+    /* ── Landing ──────────────────────────────────── */
+    #landing {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: calc(100vh - 64px);
+      text-align: center; gap: 1.5rem;
+    }
+
+    #landing h1 {
+      font-size: 2.8rem; font-weight: 800;
+      background: linear-gradient(135deg, #e2e8f0, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    #landing p { color: var(--muted); max-width: 480px; line-height: 1.7; font-size: 1.05rem; }
+
+    .feature-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1rem; margin-top: 1rem; text-align: left; width: 100%;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .feature-card .icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .feature-card h3 { font-size: .95rem; font-weight: 600; margin-bottom: .3rem; }
+    .feature-card p  { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
+    /* ── Cards ────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card h2 {
+      font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 1rem; display: flex;
+      align-items: center; gap: .5rem;
+    }
+
+    /* ── Forms ────────────────────────────────────── */
+    .form-group { margin-bottom: 1rem; }
+
+    label {
+      display: block; font-size: .8rem;
+      font-weight: 500; color: var(--muted);
+      margin-bottom: .35rem; text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .65rem .9rem;
+      font-family: 'Inter', sans-serif;
+      font-size: .9rem;
+      transition: border-color .18s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 90px; }
+
+    select option { background: var(--surface); }
+
+    /* ── Tables ───────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th, td { padding: .75rem 1rem; text-align: left; }
+    th { color: var(--muted); font-weight: 500; font-size: .75rem;
+         text-transform: uppercase; letter-spacing: .04em;
+         border-bottom: 1px solid var(--border); }
+    tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+
+    .hash-pill {
+      font-family: monospace; font-size: .75rem;
+      background: rgba(59,130,246,.12);
+      color: #93c5fd;
+      padding: .2rem .55rem; border-radius: 4px;
+      word-break: break-all;
+    }
+
+    .addr-short { font-family: monospace; color: var(--muted); font-size: .82rem; }
+
+    /* ── Badges ───────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: .2rem .6rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 600;
+    }
+
+    .badge-consultation { background: rgba(59,130,246,.15); color: #93c5fd; }
+    .badge-lab          { background: rgba(16,185,129,.15); color: #6ee7b7; }
+    .badge-prescription { background: rgba(245,158,11,.15); color: #fcd34d; }
+
+    /* ── Status ───────────────────────────────────── */
+    #status-bar {
+      position: fixed; bottom: 1rem; right: 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .8rem 1.2rem;
+      font-size: .85rem;
+      display: none; z-index: 999;
+      box-shadow: 0 8px 30px rgba(0,0,0,.5);
+      max-width: 360px;
+    }
+
+    #status-bar.show { display: block; animation: slideIn .25s ease; }
+    #status-bar.success { border-color: var(--green); }
+    #status-bar.error   { border-color: var(--red); }
+    #status-bar.info    { border-color: var(--accent); }
+
+    @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+    /* ── Page heading ─────────────────────────────── */
+    .page-header {
+      margin-bottom: 2rem;
+    }
+    .page-header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .3rem; }
+    .page-header p  { color: var(--muted); }
+
+    .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+    /* ── Record detail modal ───────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      display: none; align-items: center;
+      justify-content: center; z-index: 200;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem; width: 90%; max-width: 560px;
+      position: relative;
+    }
+
+    .modal h2 { font-size: 1.1rem; margin-bottom: 1.25rem; }
+    .modal .close-btn {
+      position: absolute; top: 1rem; right: 1rem;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); width: 28px; height: 28px;
+      border-radius: 50%; font-size: 1rem; cursor: pointer;
+    }
+
+    .detail-row { display: flex; gap: 1rem; margin-bottom: .75rem; }
+    .detail-label { color: var(--muted); font-size: .78rem; font-weight: 500;
+                    text-transform: uppercase; min-width: 110px; margin-top: .1rem; }
+    .detail-value { font-size: .9rem; word-break: break-all; }
+
+    .record-content-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem; font-size: .88rem;
+      line-height: 1.7; margin-top: .5rem;
+      white-space: pre-wrap;
+    }
+
+    /* ── Admin stats ──────────────────────────────── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .stat-card { background: var(--card); border: 1px solid var(--border);
+                 border-radius: var(--radius); padding: 1.25rem; }
+    .stat-card .stat-num { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .stat-card .stat-label { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+
+    /* ── Empty state ──────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: .75rem; }
+
+    /* ── Integrity indicator ──────────────────────── */
+    .integrity { display: inline-flex; align-items: center; gap: .3rem; font-size: .78rem; padding: .15rem .5rem; border-radius: 4px; }
+    .integrity.ok   { background: rgba(16,185,129,.1); color: var(--green); }
+    .integrity.fail { background: rgba(239,68,68,.1);  color: var(--red); }
+
+    @media (max-width: 600px) {
+      .feature-grid { grid-template-columns: 1fr; }
+      .stats-grid   { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ──────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+    Med<span>Chain</span>
+  </div>
+  <div class="wallet-section" id="wallet-section">
+    <button class="btn-primary" id="connect-btn" onclick="connectWallet()">🔌 Connect MetaMask</button>
+  </div>
+</nav>
+
+<!-- ── Status toast ─────────────────────────────────────── -->
+<div id="status-bar"></div>
+
+<!-- ── Record detail modal ─────────────────────────────── -->
+<div class="modal-backdrop" id="record-modal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal()">✕</button>
+    <h2>🗂 Record Details</h2>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<main>
+  <!-- ── Landing ──────────────────────────────────────── -->
+  <section id="landing" class="active">
+    <h1>Secure Medical Records<br/>on the Blockchain</h1>
+    <p>A decentralized system where doctors write tamper-proof records, patients own their data, and admins see only anonymized metadata — all verified on-chain.</p>
+    <button class="btn-primary" style="font-size:1rem;padding:.8rem 2rem;" onclick="connectWallet()">🔌 Connect MetaMask to Start</button>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon">🔒</div>
+        <h3>Hash on Chain</h3>
+        <p>Only the SHA-256 fingerprint of each record is stored on-chain — content stays private. Any tampering is instantly detectable.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">👥</div>
+        <h3>Role-Based Access</h3>
+        <p>Doctors write and read their records. Patients access their own data. Admins see only anonymous metadata.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⛓️</div>
+        <h3>Immutable Audit Trail</h3>
+        <p>Every record creation emits a blockchain event — a permanent, tamper-proof audit log that cannot be deleted.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Doctor Dashboard ─────────────────────────────── -->
+  <section id="doctor-section">
+    <div class="page-header">
+      <h1>👨‍⚕️ Doctor Dashboard</h1>
+      <p>Add medical records and view all records you have created.</p>
+    </div>
+
+    <!-- Add Record Form -->
+    <div class="card">
+      <h2>➕ Add New Record</h2>
+      <div class="form-group">
+        <label>Patient Wallet Address</label>
+        <input type="text" id="d-patient-addr" placeholder="0x..." />
+      </div>
+      <div class="form-group">
+        <label>Diagnosis / Label <small style="color:var(--muted)">(visible to admin as metadata)</small></label>
+        <input type="text" id="d-diagnosis" placeholder="e.g. Cardiology Consultation" />
+      </div>
+      <div class="form-group">
+        <label>Record Type</label>
+        <select id="d-record-type">
+          <option value="Consultation">Consultation</option>
+          <option value="Lab Result">Lab Result</option>
+          <option value="Prescription">Prescription</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Full Record Content <small style="color:var(--muted)">(stored locally; only hash goes on-chain)</small></label>
+        <textarea id="d-content" placeholder="Patient symptoms, findings, medications, notes..."></textarea>
+      </div>
+      <button class="btn-primary" id="add-record-btn" onclick="addRecord()">Submit Record to Blockchain</button>
+    </div>
+
+    <!-- My Records -->
+    <div class="card">
+      <h2>📋 My Records</h2>
+      <div id="doctor-records-list"><div class="empty-state"><div class="icon">📄</div><p>No records yet. Add your first record above.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ── Patient Dashboard ─────────────────────────────── -->
+  <section id="patient-section">
+    <div class="page-header">
+      <h1>🧑‍⚕️ Patient Dashboard</h1>
+      <p>View all medical records associated with your wallet address.</p>
+    </div>
+
+    <div class="card">
+      <h2>📋 My Medical Records</h2>
+      <div id="patient-records-list"><div class="empty-state"><div class="icon">💊</div><p>No records found linked to your address.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ── Admin Dashboard ─────────────────────────────────── -->
+  <section id="admin-section">
+    <div class="page-header">
+      <h1>🛡️ Admin Dashboard</h1>
+      <p>Manage roles and view system-wide metadata. Record content is never visible here.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="admin-stats">
+      <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total Records</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-doctors">—</div><div class="stat-label">Registered Doctors</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-patients">—</div><div class="stat-label">Registered Patients</div></div>
+    </div>
+
+    <!-- Register Doctor -->
+    <div class="card">
+      <h2>🩺 Register Doctor</h2>
+      <div style="display:flex;gap:.75rem;">
+        <input type="text" id="a-doctor-addr" placeholder="Doctor wallet address (0x...)" />
+        <button class="btn-outline" onclick="registerDoctor()" style="white-space:nowrap;">Register Doctor</button>
+      </div>
+    </div>
+
+    <!-- Register Patient -->
+    <div class="card">
+      <h2>🧑 Register Patient</h2>
+      <div style="display:flex;gap:.75rem;">
+        <input type="text" id="a-patient-addr" placeholder="Patient wallet address (0x...)" />
+        <button class="btn-outline" onclick="registerPatient()" style="white-space:nowrap;">Register Patient</button>
+      </div>
+    </div>
+
+    <!-- Metadata Table -->
+    <div class="card">
+      <h2>📊 All Records — Metadata Only</h2>
+      <div id="admin-records-list"><div class="empty-state"><div class="icon">📊</div><p>No records in the system yet.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ── No Role ─────────────────────────────────────────── -->
+  <section id="no-role-section">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 200px);text-align:center;gap:1rem;">
+      <div style="font-size:3rem;">⛔</div>
+      <h2 style="font-size:1.5rem;">Access Denied</h2>
+      <p style="color:var(--muted);max-width:420px;">Your wallet address (<span id="no-role-addr" style="font-family:monospace;color:var(--text);font-size:.85rem;"></span>) has not been assigned a role.<br/><br/>Please ask the system admin to register you as a Doctor or Patient.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ─────────────────────── SCRIPTS ─────────────────────────── -->
+<script>
+// ─── Load contract config (written by deploy.js) ─────────────
+let CONTRACT_ADDRESS = null;
+let CONTRACT_ABI     = null;
+
+async function loadConfig() {
+  try {
+    const res  = await fetch('./contract-config.json');
+    const cfg  = await res.json();
+    CONTRACT_ADDRESS = cfg.contractAddress;
+    CONTRACT_ABI     = cfg.abi;
+    return true;
+  } catch {
+    showStatus('contract-config.json not found. Did you run the deploy script?', 'error');
+    return false;
+  }
+}
+
+// ─── State ───────────────────────────────────────────────────
+let provider, signer, contract, userAddress, userRole;
+
+// Off-chain storage: recordId => { content, hash }
+const STORAGE_KEY = 'medchain_records';
+
+function saveLocal(recordId, content, hash) {
+  const store = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  store[recordId] = { content, hash };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+function getLocal(recordId) {
+  const store = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  return store[String(recordId)] || null;
+}
+
+// ─── SHA-256 via Web Crypto ───────────────────────────────────
+async function sha256(text) {
+  const data   = new TextEncoder().encode(text);
+  const hashBuf = await crypto.subtle.digest('SHA-256', data);
+  const arr    = Array.from(new Uint8Array(hashBuf));
+  return '0x' + arr.map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ─── UI Helpers ──────────────────────────────────────────────
+function showStatus(msg, type = 'info') {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.className = `show ${type}`;
+  clearTimeout(bar._t);
+  bar._t = setTimeout(() => bar.classList.remove('show'), 6000);
+}
+
+function showSection(id) {
+  document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
+  document.getElementById('landing').style.display = 'none';
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+}
+
+function short(addr) {
+  return addr ? addr.slice(0,6) + '…' + addr.slice(-4) : '';
+}
+
+function badgeFor(type) {
+  const map = { 'Consultation': 'consultation', 'Lab Result': 'lab', 'Prescription': 'prescription' };
+  return `<span class="badge badge-${map[type] || 'consultation'}">${type}</span>`;
+}
+
+function formatDate(timestamp) {
+  return new Date(Number(timestamp) * 1000).toLocaleString();
+}
+
+function closeModal() {
+  document.getElementById('record-modal').classList.remove('open');
+}
+
+// ─── Connect Wallet ───────────────────────────────────────────
+async function connectWallet() {
+  if (!window.ethereum) {
+    return showStatus('MetaMask not detected! Please install the MetaMask browser extension.', 'error');
+  }
+
+  const loaded = await loadConfig();
+  if (!loaded) return;
+
+  try {
+    showStatus('Connecting wallet…', 'info');
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+    // Check network
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (parseInt(chainId, 16) !== 31337) {
+      showStatus('Wrong network! Please switch MetaMask to "Hardhat Local" (Chain ID 31337).', 'error');
+      return;
+    }
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer   = await provider.getSigner();
+    userAddress = await signer.getAddress();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+    userRole = await contract.getRole(userAddress);
+
+    // Update navbar
+    document.getElementById('wallet-section').innerHTML = `
+      <span class="role-badge ${userRole}">${userRole.toUpperCase()}</span>
+      <span style="font-family:monospace;font-size:.82rem;color:var(--muted)">${short(userAddress)}</span>
+      <button class="btn-outline" onclick="disconnect()">Disconnect</button>
+    `;
+
+    // Route to the right dashboard
+    if      (userRole === 'admin')   { showSection('admin-section');   loadAdminDashboard(); }
+    else if (userRole === 'doctor')  { showSection('doctor-section');  loadDoctorDashboard(); }
+    else if (userRole === 'patient') { showSection('patient-section'); loadPatientDashboard(); }
+    else {
+      showSection('no-role-section');
+      document.getElementById('no-role-addr').textContent = userAddress;
+    }
+
+    showStatus('Wallet connected: ' + short(userAddress), 'success');
+
+    // Listen for account changes
+    window.ethereum.on('accountsChanged', () => location.reload());
+    window.ethereum.on('chainChanged',    () => location.reload());
+
+  } catch (err) {
+    showStatus('Connection failed: ' + err.message, 'error');
+  }
+}
+
+function disconnect() { location.reload(); }
+
+// ─── Doctor Dashboard ──────────────────────────────────────────
+async function addRecord() {
+  const patientAddr  = document.getElementById('d-patient-addr').value.trim();
+  const diagnosis    = document.getElementById('d-diagnosis').value.trim();
+  const recordType   = document.getElementById('d-record-type').value;
+  const content      = document.getElementById('d-content').value.trim();
+
+  if (!patientAddr || !diagnosis || !content) {
+    return showStatus('Please fill in all fields.', 'error');
+  }
+
+  if (!ethers.isAddress(patientAddr)) {
+    return showStatus('Invalid patient wallet address.', 'error');
+  }
+
+  try {
+    document.getElementById('add-record-btn').disabled = true;
+    showStatus('Computing content hash…', 'info');
+
+    const hash = ethers.keccak256(ethers.toUtf8Bytes(content));
+
+    showStatus('Submitting transaction — please confirm in MetaMask…', 'info');
+    const tx = await contract.addRecord(patientAddr, hash, diagnosis, recordType);
+    showStatus('Transaction submitted. Waiting for confirmation…', 'info');
+
+    const receipt = await tx.wait();
+
+    // Extract record ID from event log
+    let recordId = null;
+    for (const log of receipt.logs) {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        if (parsed && parsed.name === 'RecordAdded') {
+          recordId = parsed.args[0].toString();
+          break;
+        }
+      } catch {}
+    }
+
+    if (recordId) {
+      saveLocal(recordId, content, hash);
+      showStatus(`✅ Record #${recordId} added to blockchain!`, 'success');
+    } else {
+      showStatus('Record added but could not extract ID from log.', 'info');
+    }
+
+    // Reset form
+    document.getElementById('d-patient-addr').value = '';
+    document.getElementById('d-diagnosis').value    = '';
+    document.getElementById('d-content').value      = '';
+
+    loadDoctorDashboard();
+  } catch (err) {
+    showStatus('Error: ' + (err.reason || err.message), 'error');
+  } finally {
+    document.getElementById('add-record-btn').disabled = false;
+  }
+}
+
+async function loadDoctorDashboard() {
+  const el = document.getElementById('doctor-records-list');
+  el.innerHTML = '<p style="color:var(--muted);padding:1rem;">Loading records…</p>';
+
+  try {
+    const ids = await contract.getDoctorRecordIds(userAddress);
+    if (!ids.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">📄</div><p>No records yet.</p></div>';
+      return;
+    }
+
+    const rows = await Promise.all(ids.map(id => fetchRecordRow(id, 'doctor')));
+
+    el.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th>Patient</th><th>Diagnosis</th><th>Type</th>
+          <th>Date</th><th>Integrity</th><th>Action</th>
+        </tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    `;
+  } catch (err) {
+    el.innerHTML = '<p style="color:var(--red);padding:1rem;">Failed to load: ' + err.message + '</p>';
+  }
+}
+
+async function loadPatientDashboard() {
+  const el = document.getElementById('patient-records-list');
+  el.innerHTML = '<p style="color:var(--muted);padding:1rem;">Loading records…</p>';
+
+  try {
+    const ids = await contract.getPatientRecordIds(userAddress);
+    if (!ids.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">💊</div><p>No records found for your address.</p></div>';
+      return;
+    }
+
+    const rows = await Promise.all(ids.map(id => fetchRecordRow(id, 'patient')));
+
+    el.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th>Doctor</th><th>Diagnosis</th><th>Type</th>
+          <th>Date</th><th>Integrity</th><th>Action</th>
+        </tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    `;
+  } catch (err) {
+    el.innerHTML = '<p style="color:var(--red);padding:1rem;">Failed to load: ' + err.message + '</p>';
+  }
+}
+
+async function fetchRecordRow(id, perspective) {
+  try {
+    const [rid, doctor, patient, hash, label, type, ts] = await contract.getRecord(id);
+    const local = getLocal(rid.toString());
+    let integrity = '';
+
+    if (local) {
+      const currentHash = ethers.keccak256(ethers.toUtf8Bytes(local.content));
+      const ok = currentHash === hash;
+      integrity = ok
+        ? '<span class="integrity ok">✓ Verified</span>'
+        : '<span class="integrity fail">⚠ Tampered</span>';
+    } else {
+      integrity = '<span class="integrity" style="color:var(--muted)">Off-chain missing</span>';
+    }
+
+    const counterpartyAddr = perspective === 'doctor' ? patient : doctor;
+
+    return `
+      <tr>
+        <td>#${rid}</td>
+        <td class="addr-short">${short(counterpartyAddr)}</td>
+        <td>${label}</td>
+        <td>${badgeFor(type)}</td>
+        <td>${formatDate(ts)}</td>
+        <td>${integrity}</td>
+        <td><button class="btn-outline" style="padding:.3rem .75rem;font-size:.78rem;" onclick='viewRecord(${rid})'>View</button></td>
+      </tr>`;
+  } catch (e) {
+    return `<tr><td colspan="7" style="color:var(--red)">Record #${id}: Access error</td></tr>`;
+  }
+}
+
+async function viewRecord(id) {
+  const modal   = document.getElementById('record-modal');
+  const content = document.getElementById('modal-content');
+  content.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
+  modal.classList.add('open');
+
+  try {
+    const [rid, doctor, patient, hash, label, type, ts] = await contract.getRecord(id);
+    const local = getLocal(rid.toString());
+
+    let contentSection = '';
+    let integrityBadge = '';
+
+    if (local) {
+      const currentHash = ethers.keccak256(ethers.toUtf8Bytes(local.content));
+      const ok = currentHash === hash;
+      integrityBadge = ok
+        ? '<span class="integrity ok">✓ Content Verified Against On-Chain Hash</span>'
+        : '<span class="integrity fail">⚠ Content Tampered — Hash Mismatch!</span>';
+      contentSection = `
+        <div class="detail-row">
+          <span class="detail-label">Content</span>
+          <div style="flex:1">
+            <div class="record-content-box">${local.content}</div>
+          </div>
+        </div>`;
+    } else {
+      contentSection = `
+        <div class="detail-row">
+          <span class="detail-label">Content</span>
+          <span class="detail-value" style="color:var(--muted)">Record was created on another device — off-chain content not available locally.</span>
+        </div>`;
+    }
+
+    content.innerHTML = `
+      <div class="detail-row"><span class="detail-label">Record ID</span><span class="detail-value">#${rid}</span></div>
+      <div class="detail-row"><span class="detail-label">Doctor</span><span class="detail-value addr-short">${doctor}</span></div>
+      <div class="detail-row"><span class="detail-label">Patient</span><span class="detail-value addr-short">${patient}</span></div>
+      <div class="detail-row"><span class="detail-label">Diagnosis</span><span class="detail-value">${label}</span></div>
+      <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${badgeFor(type)}</span></div>
+      <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${formatDate(ts)}</span></div>
+      <div class="detail-row"><span class="detail-label">On-chain Hash</span><span class="hash-pill">${hash}</span></div>
+      ${integrityBadge ? `<div style="margin:.5rem 0">${integrityBadge}</div>` : ''}
+      <div class="divider"></div>
+      ${contentSection}
+    `;
+  } catch (err) {
+    content.innerHTML = `<p style="color:var(--red)">Error: ${err.reason || err.message}</p>`;
+  }
+}
+
+// ─── Admin Dashboard ────────────────────────────────────────────
+async function loadAdminDashboard() {
+  try {
+    const total = await contract.totalRecords();
+    document.getElementById('stat-total').textContent = total.toString();
+    document.getElementById('stat-doctors').textContent = '—';
+    document.getElementById('stat-patients').textContent = '—';
+
+    if (Number(total) === 0) return;
+
+    const ids  = await contract.getAllRecordIds();
+    const rows = await Promise.all(ids.map(async id => {
+      try {
+        const [rid, doc, pat, label, type, ts] = await contract.getRecordMetadata(id);
+        return `
+          <tr>
+            <td>#${rid}</td>
+            <td class="addr-short">${short(doc)}</td>
+            <td class="addr-short">${short(pat)}</td>
+            <td>${label}</td>
+            <td>${badgeFor(type)}</td>
+            <td>${formatDate(ts)}</td>
+            <td><span style="color:var(--muted);font-size:.78rem;font-style:italic">Hidden</span></td>
+          </tr>`;
+      } catch {
+        return `<tr><td colspan="7" style="color:var(--muted)">Record #${id}: no access</td></tr>`;
+      }
+    }));
+
+    document.getElementById('admin-records-list').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th>Doctor</th><th>Patient</th><th>Diagnosis Label</th>
+          <th>Type</th><th>Date</th><th>Content</th>
+        </tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    `;
+  } catch (err) {
+    showStatus('Error loading admin data: ' + err.message, 'error');
+  }
+}
+
+async function registerDoctor() {
+  const addr = document.getElementById('a-doctor-addr').value.trim();
+  if (!ethers.isAddress(addr)) return showStatus('Invalid address.', 'error');
+  try {
+    showStatus('Submitting — approve in MetaMask…', 'info');
+    const tx = await contract.registerDoctor(addr);
+    await tx.wait();
+    showStatus('✅ Doctor registered: ' + short(addr), 'success');
+    document.getElementById('a-doctor-addr').value = '';
+    loadAdminDashboard();
+  } catch (err) {
+    showStatus('Error: ' + (err.reason || err.message), 'error');
+  }
+}
+
+async function registerPatient() {
+  const addr = document.getElementById('a-patient-addr').value.trim();
+  if (!ethers.isAddress(addr)) return showStatus('Invalid address.', 'error');
+  try {
+    showStatus('Submitting — approve in MetaMask…', 'info');
+    const tx = await contract.registerPatient(addr);
+    await tx.wait();
+    showStatus('✅ Patient registered: ' + short(addr), 'success');
+    document.getElementById('a-patient-addr').value = '';
+    loadAdminDashboard();
+  } catch (err) {
+    showStatus('Error: ' + (err.reason || err.message), 'error');
+  }
+}
+
+// ─── ethers.js via CDN ────────────────────────────────────────
+</script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+</body>
+</html>

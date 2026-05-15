@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Medical Records - Secure Health{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">
+                <i class="fas fa-file-medical text-primary me-2"></i>Medical Records
+            </h2>
+            <a href="{{ url_for('patient_radiology') }}" class="btn btn-success">
+                <i class="fas fa-x-ray me-2"></i>Radiology
+            </a>
+        </div>
+    </div>
+
+    <!-- Medical Records List -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if records %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Doctor</th>
+                            <th>Specialization</th>
+                            <th>Diagnosis</th>
+                            <th>Treatment</th>
+                            <th>Blockchain</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
+                            <td>Dr. {{ record.doctor_name }}</td>
+                            <td>{{ record.specialization }}</td>
+                            <td>{{ record.diagnosis or 'Not specified' }}</td>
+                            <td>{{ record.treatment or 'Not specified' }}</td>
+                            <td>
+                                {% if record.on_chain %}
+                                <span class="badge bg-success" title="TX: {{ record.blockchain_tx }}" style="cursor:pointer;"
+                                      onclick="showTxDetails('{{ record.blockchain_record_id }}', '{{ record.blockchain_tx }}')">
+                                    ⛓ On-Chain #{{ record.blockchain_record_id }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">Not Anchored</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('view_medical_record', record_id=record.id) }}" class="btn btn-sm btn-info" title="View Record">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if record.signed %}
+                                <a href="{{ url_for('view_medical_record_signature', record_id=record.id) }}" class="btn btn-sm btn-success" title="Signed and verified">
+                                    <i class="fas fa-signature"></i>
+                                    <i class="fas fa-check ms-1"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No medical records found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- On-Chain Records (MetaMask) -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fab fa-ethereum me-2"></i>My Blockchain Transactions</h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadMyChainRecords()">
+                <i class="fas fa-sync-alt me-1"></i>Load from MetaMask
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="chain-records">
+                <p class="text-muted text-center py-3">
+                    Click "Load from MetaMask" to see your records on the blockchain.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TX Details Modal -->
+<div class="modal fade" id="txModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-link me-2"></i>Blockchain Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="txModalBody"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Ethers.js -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<script>
+var CONTRACT_ADDRESS = "{{ CONTRACT_ADDRESS }}";
+var CONTRACT_ABI     = {{ CONTRACT_ABI | tojson }};
+
+function showTxDetails(chainId, txHash) {
+    document.getElementById('txModalBody').innerHTML = `
+        <div class="mb-3">
+            <strong>On-Chain Record ID:</strong> #${chainId}
+        </div>
+        <div class="mb-3">
+            <strong>Transaction Hash:</strong><br>
+            <code style="font-size:0.8rem;word-break:break-all;">${txHash}</code>
+        </div>
+        <div class="text-muted small">
+            This record is permanently stored on the Hardhat blockchain and cannot be tampered with.
+        </div>
+    `;
+    new bootstrap.Modal(document.getElementById('txModal')).show();
+}
+
+async function loadMyChainRecords() {
+    const el = document.getElementById('chain-records');
+    el.innerHTML = '<p class="text-muted text-center"><i class="fas fa-spinner fa-spin me-1"></i>Connecting to MetaMask...</p>';
+
+    if (!window.ethereum) {
+        el.innerHTML = '<div class="alert alert-warning">MetaMask not detected. Install MetaMask to view your blockchain transactions.</div>';
+        return;
+    }
+
+    try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const myAddr = await signer.getAddress();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        const role = await contract.getRole(myAddr);
+        const total = await contract.totalRecords();
+
+        let html = `<div class="mb-3">
+            <span class="badge bg-info">${role}</span>
+            <code class="ms-2" style="font-size:0.8rem;">${myAddr.slice(0,6)}...${myAddr.slice(-4)}</code>
+            <span class="text-muted ms-2">(${total.toString()} total on-chain records)</span>
+        </div>`;
+
+        if (Number(total) === 0) {
+            html += '<p class="text-muted">No records on the blockchain yet.</p>';
+            el.innerHTML = html;
+            return;
+        }
+
+        // Use getPatientRecordIds — patient can call this for their own address
+        const ids = await contract.getPatientRecordIds(myAddr);
+
+        if (ids.length === 0) {
+            html += '<p class="text-muted">No blockchain records associated with your wallet.</p>';
+            el.innerHTML = html;
+            return;
+        }
+
+        let rows = '';
+        for (const id of ids) {
+            try {
+                const [rid, doc, pat, label, type, ts] = await contract.getRecordMetadata(id);
+                const date = new Date(Number(ts) * 1000).toLocaleString();
+                rows += `<tr>
+                    <td>#${rid}</td>
+                    <td><code style="font-size:0.75rem;">${doc.slice(0,6)}...${doc.slice(-4)}</code></td>
+                    <td>${label}</td>
+                    <td><span class="badge bg-${type==='Consultation'?'primary':'warning'}">${type}</span></td>
+                    <td>${date}</td>
+                    <td><span class="badge bg-success">✓ Verified</span></td>
+                </tr>`;
+            } catch(e) { continue; }
+        }
+
+        html += `<div class="table-responsive"><table class="table table-hover table-sm">
+            <thead><tr><th>#</th><th>Doctor</th><th>Diagnosis</th><th>Type</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>${rows}</tbody></table></div>`;
+
+        el.innerHTML = html;
+    } catch (err) {
+        el.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    }
+}
+</script>
+{% endblock %}

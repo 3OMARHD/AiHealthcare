@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Secure Health{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-shield text-primary me-2"></i>Admin Dashboard
+                    </h2>
+                    <p class="text-muted mb-0">Welcome back, {{ session.username }}!</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-danger">
+                        <i class="fas fa-user-shield me-1"></i>Administrator
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blockchain Status Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm" style="border-left: 4px solid {% if blockchain_stats.connected %}#10b981{% else %}#ef4444{% endif %};">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <span style="font-size:1.5rem;">⛓️</span>
+                            <div>
+                                <strong>Blockchain Status:</strong>
+                                {% if blockchain_stats.connected %}
+                                <span class="badge bg-success ms-1"><i class="fas fa-circle me-1" style="font-size:0.5rem;"></i>Connected</span>
+                                {% else %}
+                                <span class="badge bg-danger ms-1"><i class="fas fa-circle me-1" style="font-size:0.5rem;"></i>Offline</span>
+                                {% endif %}
+                            </div>
+                            {% if blockchain_stats.connected %}
+                            <small class="text-muted">
+                                Contract: <code style="font-size:0.75rem;">{{ blockchain_stats.contract_address[:10] }}...{{ blockchain_stats.contract_address[-6:] }}</code>
+                                | Chain ID: {{ blockchain_stats.chain_id }}
+                                | Block: #{{ blockchain_stats.block_number }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <form method="POST" action="{{ url_for('admin_blockchain_sync') }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-primary" {% if not blockchain_stats.connected %}disabled{% endif %}>
+                                    <i class="fas fa-sync-alt me-1"></i>Sync All Users
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin_hash_records') }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Compute SHA-256 hashes for all unhashed medical records">
+                                    <i class="fas fa-hashtag me-1"></i>Hash All Records
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Patients</h6>
+                            <h2 class="mb-0">{{ stats.patients }}</h2>
+                        </div>
+                        <i class="fas fa-user-injured fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Doctors</h6>
+                            <h2 class="mb-0">{{ stats.doctors }}</h2>
+                        </div>
+                        <i class="fas fa-user-md fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Admins</h6>
+                            <h2 class="mb-0">{{ stats.admins }}</h2>
+                        </div>
+                        <i class="fas fa-user-shield fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white h-100" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">On-Chain Records</h6>
+                            <h2 class="mb-0">{{ blockchain_stats.total_records if blockchain_stats.connected else '—' }}</h2>
+                        </div>
+                        <span style="font-size:2rem;opacity:0.5;">⛓️</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blockchain Records Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" style="color:#3b82f6;">{{ stats.total_records }}</h3>
+                    <small class="text-muted">Total Medical Records (DB)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" style="color:#10b981;">{{ stats.hashed_records }}</h3>
+                    <small class="text-muted">Records with Hash</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" style="color:#8b5cf6;">{{ stats.onchain_records }}</h3>
+                    <small class="text-muted">Anchored on Blockchain</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blockchain Management -->
+    <div class="row g-4 mb-4">
+        <!-- Register Wallet -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="fas fa-wallet text-primary me-2"></i>Assign Wallet to User</h5>
+                    <p class="text-muted small mb-3">Select a user, enter their MetaMask wallet. It will be saved to the database AND registered on-chain.</p>
+                    <form method="POST" action="{{ url_for('admin_blockchain_register') }}">
+                        <div class="mb-3">
+                            <label class="form-label">User</label>
+                            <select class="form-select" name="user_id" required>
+                                <option value="">Select user...</option>
+                                {% for u in all_users %}
+                                <option value="{{ u.id }}" data-role="{{ u.role }}">
+                                    {{ u.username }} ({{ u.role }}) {% if u.wallet %}✅{% else %}⚠ No wallet{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Wallet Address</label>
+                            <input type="text" class="form-control" name="wallet_address" placeholder="0x..."
+                                   pattern="^0x[a-fA-F0-9]{40}$" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" {% if not blockchain_stats.connected %}disabled{% endif %}>
+                            <i class="fas fa-link me-2"></i>Save to DB & Register on Chain
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Record -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="fas fa-check-double text-success me-2"></i>Verify Record Integrity</h5>
+                    <div class="mb-3">
+                        <input type="number" class="form-control" id="verify-record-id" placeholder="Enter DB Record ID" min="1">
+                    </div>
+                    <button class="btn btn-success w-100" onclick="verifyRecord()" {% if not blockchain_stats.connected %}disabled{% endif %}>
+                        <i class="fas fa-search me-2"></i>Verify Against Blockchain
+                    </button>
+                    <div id="verify-result" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- On-Chain Transaction Ledger (privacy-preserving: no diagnosis/treatment) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><i class="fas fa-exchange-alt me-2"></i>On-Chain Transaction Ledger</h3>
+                    <button class="btn btn-sm btn-outline-light" onclick="loadTransactionLedger()" {% if not blockchain_stats.connected %}disabled{% endif %}>
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Privacy mode: Admin can see transaction flow (Doctor → Patient) but cannot view diagnosis or treatment content.
+                    </p>
+                    <div id="transaction-ledger">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-spinner fa-spin"></i> Loading transactions...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- User Management Card -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users-cog text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title mb-0">User Management</h5>
+                            <p class="text-muted mb-0">Manage system users</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('admin_dashboard') }}#users" class="btn btn-primary w-100">
+                        <i class="fas fa-users me-2"></i>Manage Users
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Logs Card -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clipboard-list text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title mb-0">System Logs</h5>
+                            <p class="text-muted mb-0">Monitor system activity</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('admin_logs') }}" class="btn btn-primary w-100">
+                        <i class="fas fa-history me-2"></i>View Logs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Recent Activity</h3>
+                    <a href="{{ url_for('admin_logs') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-history me-2"></i>View All Logs
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log[0].strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>{{ log[1] }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if 'success' in log[2] else 'danger' if 'error' in log[2] or 'failed' in log[2] else 'info' }}">
+                                            {{ log[2] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ log[3] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Section -->
+    <div class="row mb-4" id="users">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">User Management</h3>
+                    <a href="{{ url_for('admin_add_user') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-user-plus me-2"></i>Add New User
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('admin_dashboard') }}#users" class="mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" name="user_search" placeholder="Search users..." value="{{ request.args.get('user_search', '') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select" name="user_role">
+                                    <option value="all" {% if request.args.get('user_role') == 'all' %}selected{% endif %}>All Roles</option>
+                                    <option value="admin" {% if request.args.get('user_role') == 'admin' %}selected{% endif %}>Admins</option>
+                                    <option value="doctor" {% if request.args.get('user_role') == 'doctor' %}selected{% endif %}>Doctors</option>
+                                    <option value="patient" {% if request.args.get('user_role') == 'patient' %}selected{% endif %}>Patients</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">Apply</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Wallet</th>
+                                    <th>On-Chain</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user[0] }}</td>
+                                    <td>{{ user[1] }}</td>
+                                    <td>{{ user[2] }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if user[3] == 'admin' else 'primary' if user[3] == 'doctor' else 'success' }}">
+                                            {{ user[3] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user[4] %}
+                                        <code style="font-size:0.75rem;">{{ user[4][:6] }}...{{ user[4][-4:] }}</code>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user[4] and user[4]|lower in onchain_roles %}
+                                            {% set chain_role = onchain_roles[user[4]|lower] %}
+                                            {% if chain_role == 'none' %}
+                                            <span class="badge bg-secondary" title="Not registered on blockchain">✗ None</span>
+                                            {% elif chain_role == 'error' %}
+                                            <span class="badge bg-warning">⚠ Error</span>
+                                            {% else %}
+                                            <span class="badge bg-info" title="On-chain role: {{ chain_role }}">✓ {{ chain_role }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('admin_edit_user', user_id=user[0]) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form action="{{ url_for('admin_delete_user', user_id=user[0]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete user {{ user[1] }}?');" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ethers.js for MetaMask on-chain interaction -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<script>
+var CONTRACT_ADDRESS = "{{ CONTRACT_ADDRESS }}";
+var CONTRACT_ABI     = {{ CONTRACT_ABI | tojson }};
+var SESSION_WALLET   = "{{ session.get('wallet_address', '') }}";
+
+// ─── Transaction Ledger (privacy-preserving) ─────────────────
+async function loadTransactionLedger() {
+    const el = document.getElementById('transaction-ledger');
+    el.innerHTML = '<p class="text-muted text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading transactions...</p>';
+
+    try {
+        const res = await fetch('/admin/blockchain/records');
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        const data = await res.json();
+
+        if (!data.records || data.records.length === 0) {
+            el.innerHTML = '<p class="text-muted text-center">No on-chain transactions found.</p>';
+            return;
+        }
+
+        let rows = '';
+        for (const r of data.records) {
+            const date = new Date(r.timestamp * 1000).toLocaleString();
+            rows += `<tr>
+                <td>#${r.id}</td>
+                <td><code style="font-size:0.75rem;">${r.doctor.slice(0,6)}...${r.doctor.slice(-4)}</code></td>
+                <td><i class="fas fa-arrow-right text-muted mx-1"></i></td>
+                <td><code style="font-size:0.75rem;">${r.patient.slice(0,6)}...${r.patient.slice(-4)}</code></td>
+                <td><span class="badge bg-${r.record_type==='Consultation'?'primary':r.record_type==='Lab Result'?'success':'warning'}">${r.record_type}</span></td>
+                <td>${date}</td>
+                <td><span class="badge bg-success"><i class="fas fa-check me-1"></i>Valid</span></td>
+            </tr>`;
+        }
+
+        el.innerHTML = `<div class="table-responsive"><table class="table table-hover table-sm">
+            <thead><tr>
+                <th>TX #</th><th>Doctor (From)</th><th></th><th>Patient (To)</th>
+                <th>Type</th><th>Date</th><th>Status</th>
+            </tr></thead>
+            <tbody>${rows}</tbody></table></div>
+            <div class="text-muted small mt-2">${data.count} transaction(s) on-chain</div>`;
+    } catch (e) {
+        el.innerHTML = `<p class="text-danger text-center">Could not load transactions: ${e.message}</p>`;
+    }
+}
+
+// ─── Verify Record ────────────────────────────────────────────
+async function verifyRecord() {
+    const rid = document.getElementById('verify-record-id').value;
+    const el = document.getElementById('verify-result');
+    if (!rid) { el.innerHTML = '<div class="alert alert-warning py-2">Enter a record ID.</div>'; el.style.display='block'; return; }
+
+    el.innerHTML = '<p class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i>Verifying...</p>';
+    el.style.display = 'block';
+
+    try {
+        const res = await fetch(`/admin/blockchain/verify/${rid}`);
+        const data = await res.json();
+
+        if (data.error) {
+            el.innerHTML = `<div class="alert alert-danger py-2">${data.error}</div>`;
+            return;
+        }
+
+        let html = '<div class="small">';
+        html += `<div class="mb-1"><strong>DB Record:</strong> #${data.db_record_id}</div>`;
+        html += `<div class="mb-1"><strong>DB Hash:</strong> <code style="font-size:0.7rem;">${data.db_hash || 'Not hashed'}</code></div>`;
+        html += `<div class="mb-1"><strong>Computed Hash:</strong> <code style="font-size:0.7rem;">${data.computed_hash}</code></div>`;
+        html += `<div class="mb-1"><strong>Hash Match:</strong> ${data.hash_verified ? '<span class="badge bg-success">✓ Verified</span>' : '<span class="badge bg-danger">✗ Mismatch</span>'}</div>`;
+        html += `<div class="mb-1"><strong>On-Chain:</strong> ${data.on_chain ? '<span class="badge bg-success">✓ Anchored</span>' : '<span class="badge bg-secondary">✗ Not on-chain</span>'}</div>`;
+        if (data.blockchain_tx) html += `<div class="mb-1"><strong>TX:</strong> <code style="font-size:0.7rem;">${data.blockchain_tx}</code></div>`;
+        html += '</div>';
+
+        el.innerHTML = html;
+    } catch (e) {
+        el.innerHTML = `<div class="alert alert-danger py-2">Error: ${e.message}</div>`;
+    }
+}
+
+// Auto-load server API records on page load
+window.addEventListener('load', loadTransactionLedger);
+</script>
+
+<div id="blockchain-status" style="
+    position: fixed; bottom: 16px; right: 16px;
+    background: #1a1a2e; color: {% if blockchain_stats.connected %}#00d4aa{% else %}#ff6b6b{% endif %};
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-family: monospace;
+    z-index: 9999;">
+    Blockchain: {% if blockchain_stats.connected %}Connected ({{ blockchain_stats.total_records }} records){% else %}Offline{% endif %}
+</div>
+{% endblock %}

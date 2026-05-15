@@ -1,0 +1,46 @@
+# Environment
+.env
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Flask sessions
+flask_session/
+
+# SSL certs
+cert.pem
+key.pem
+
+# Logs
+*.log
+*.log.*
+application.log*
+
+# Uploads (user files)
+uploads/
+
+# Node modules (blockchain)
+node_modules/
+
+# Hardhat artifacts (regenerated on compile)
+blockchain/artifacts/
+blockchain/cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Junk folder
+junk/
+
+# Model files (too large for git)
+model/*.h5
+model/*.keras
+model/*.tflite
